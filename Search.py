@@ -138,8 +138,7 @@ class Search:
                 f"Could not get data for listing number {curr_listing_idx} - {curr_listing.url}"
             )
         else:
-            tst = curr_listing.pid
-            print(f"Adding {tst} to dataframe")
+            print(f"Adding {curr_listing.pid} to dataframe")
             self.df.loc[len(self.df)] = curr_listing.get_data()
 
     # Sort according to buckets
@@ -265,7 +264,10 @@ class Search:
         Returns:
             str: readable format of above.
         """
-        return str(posted).split(" 0")[0] + " ago"
+        days = posted.days
+        print(posted.seconds)
+        hours = (posted.seconds) // 60**2
+        return f"{days} days, {hours} hours ago"
 
     def drop_listings(self):
         """Drops listings below a specified threshold to filter fake listings."""

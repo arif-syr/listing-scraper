@@ -44,10 +44,10 @@ class Listing:
 
         # Convert date posted to days since
         # datetime.date object below
-        days_since = datetime.datetime.strptime(date_posted, "%Y-%m-%d").date()
+        days_since = datetime.datetime.strptime(date_posted, "%Y-%m-%d")
 
         # Converts datetime object with hours, etc. to days ago
-        self.posted = datetime.datetime.now().date() - days_since  # timedelta object
+        self.posted = datetime.datetime.now() - days_since  # timedelta object
 
         # Get class name which is lat and longitude
         self.lat_lon = (
