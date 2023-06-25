@@ -151,9 +151,10 @@ class Search:
             datetime.timedelta(0, 20 * minute),
             datetime.timedelta(0, 30 * minute),
             datetime.timedelta(0, 45 * minute),
+            datetime.timedelta(0, 60 * minute),
         ]
         # Journey length labels
-        labels = ["Short", "Medium", "Long"]
+        labels = ["Short", "Medium", "Long", "Very Long"]
 
         # Create new column called "Cat" to store the category of journey length
         self.df["Cat"] = pd.cut(self.df["TRAVEL TIME"], bins=bins, labels=labels)
