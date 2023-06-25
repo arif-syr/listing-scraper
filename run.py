@@ -72,16 +72,16 @@ if __name__ == "__main__":
         #     2500,
         #     "apa",
         # ],
-        [
-            "1400",
-            "1.0",
-            "1",
-            USF_LAT_LON[0],
-            USF_LAT_LON[1],
-            "room_sublet_usf/",
-            100,
-            "roo",
-        ],
+        # [
+        #     "1400",
+        #     "1.0",
+        #     "1",
+        #     USF_LAT_LON[0],
+        #     USF_LAT_LON[1],
+        #     "room_sublet_usf/",
+        #     100,
+        #     "roo",
+        # ],
     ]
 
     for setting in search_settings:

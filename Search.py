@@ -138,6 +138,8 @@ class Search:
                 f"Could not get data for listing number {curr_listing_idx} - {curr_listing.url}"
             )
         else:
+            tst = curr_listing.pid
+            print(f"Adding {tst} to dataframe")
             self.df.loc[len(self.df)] = curr_listing.get_data()
 
     # Sort according to buckets
@@ -267,8 +269,6 @@ class Search:
 
     def drop_listings(self):
         """Drops listings below a specified threshold to filter fake listings."""
-        print(len(self.df))
         self.df = self.df[~(self.df["PRICE ($)"] <= self.low_budget_threshold)]
-        print(len(self.df))
 
     # Send email?
