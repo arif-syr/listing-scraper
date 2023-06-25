@@ -265,7 +265,6 @@ class Search:
             str: readable format of above.
         """
         days = posted.days
-        print(posted.seconds)
         hours = (posted.seconds) // 60**2
         return f"{days} days, {hours} hours ago"
 
