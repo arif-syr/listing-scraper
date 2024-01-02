@@ -16,7 +16,6 @@ dtypes = {
     "CROW_DISTANCE": "float64",  # float
     "POSTED": "str",  # timedelta object
 }
-
 cols = [
     "PID",  # int64
     "TITLE",  # str
@@ -27,3 +26,5 @@ cols = [
     "CROW_DISTANCE",  # float64
     "POSTED",  # timedelta64[ns]
 ]
+
+json_folder = "./json-searches"
