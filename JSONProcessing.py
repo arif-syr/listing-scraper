@@ -38,9 +38,9 @@ class JSONProcessing:
 
         if max_rent < 0 or min_rent_cutoff < 0 or max_rent < min_rent_cutoff:
             raise ValueError("'max rent' and 'rent cutoff' must be positive, and max_rent must be > rent cutoff.")
-        if search_radius <= 0.0 or not -90.0 <= search_lon <= 90.0 or not -180.0 <= search_lat <= 180.0:
+        if search_radius <= 0.0 or not -90.0 <= search_lat <= 90.0 or not -180.0 <= search_lon <= 180.0:
             raise ValueError("search radius must be positive, "
-                             "search_lon ∈ [-90.0, 90.0] and search_lat ∈ [-180.0, 180.0]")
+                             "search_lat ∈ [-90.0, 90.0] and search_lon ∈ [-180.0, 180.0]")
         if bedrooms <= 0:
             raise ValueError("Enter a positive number of bedrooms.")
         if not (search_type == "apa" or search_type == "roo"):
@@ -48,7 +48,7 @@ class JSONProcessing:
         if JSONProcessing.search_name_exists(search_name):
             print("Creating a dictionary for an existing search.")
 
-        search_dict = dict()
+        search_dict = {}
         search_dict['max_rent'] = max_rent
         search_dict['search_radius'] = search_radius
         search_dict['bedrooms'] = bedrooms
