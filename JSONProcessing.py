@@ -69,6 +69,13 @@ class JSONProcessing:
         Returns: Boolean, True if succeeded
 
         """
+        save_path = os.path.join("./json-searches", json_filename)
+        if JSONProcessing.search_name_exists(save_path) and not overwrite:
+            raise FileExistsError("Search already exists, and overwrite flag is false. "
+                                  "Rename the search or overwrite the file please.")
+
+        with open(save_path, "w") as output_file:
+            json.dump(fp=output_file, obj=data, indent=4)
 
         return
 
@@ -87,8 +94,9 @@ class JSONProcessing:
 
 
 if __name__ == '__main__':
+    # For now, create new searches and json's through the main function
     search = JSONProcessing.create_search_dict(max_rent=500, search_radius=0.5, bedrooms=1, search_lat=12.1212,
                                                search_lon=11.1212, search_name="test", min_rent_cutoff=100,
                                                search_type="apa")
     print(search)
-    # JSONProcessing.make_search_json_file("./tst.json", search, overwrite=True)
+    JSONProcessing.make_search_json_file("tst.json", data=search, overwrite=True)
