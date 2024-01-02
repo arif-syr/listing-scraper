@@ -1,6 +1,8 @@
 import json
 import os
+import pprint
 
+from consts import json_folder
 
 class JSONProcessing:
     @staticmethod
@@ -69,7 +71,7 @@ class JSONProcessing:
         Returns: Boolean, True if succeeded
 
         """
-        save_path = os.path.join("./json-searches", json_filename)
+        save_path = os.path.join(json_folder, json_filename)
         if JSONProcessing.search_name_exists(save_path) and not overwrite:
             raise FileExistsError("Search already exists, and overwrite flag is false. "
                                   "Rename the search or overwrite the file please.")
@@ -80,16 +82,20 @@ class JSONProcessing:
         return
 
     @staticmethod
-    def get_json_dict(self, json_filename):
+    def get_json_dict(json_filename):
         """
         Converts a json into a dict
         Args:
-            json_filename: filename of json file to parse
+            json_filename: filename of search to parse
 
         Returns: search data in dict format
 
         """
-        search_data = {}
+        json_path = os.path.join(json_folder, json_filename)
+        if not JSONProcessing.search_name_exists(json_path):
+            raise FileNotFoundError("Search .json does not exist")
+        with open(json_path, "r") as input_file:
+            search_data = json.load(input_file)
         return search_data
 
 
@@ -98,5 +104,9 @@ if __name__ == '__main__':
     search = JSONProcessing.create_search_dict(max_rent=500, search_radius=0.5, bedrooms=1, search_lat=12.1212,
                                                search_lon=11.1212, search_name="test", min_rent_cutoff=100,
                                                search_type="apa")
-    print(search)
-    JSONProcessing.make_search_json_file("tst.json", data=search, overwrite=True)
+    pprint.pprint(search)
+    JSONProcessing.make_search_json_file(json_filename=search['search_name'] + ".json",
+                                         data=search, overwrite=True)
+    dict = JSONProcessing.get_json_dict(search['search_name'] + ".json")
+    pprint.pprint(dict)
+
