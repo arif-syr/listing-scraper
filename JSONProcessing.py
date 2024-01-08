@@ -64,7 +64,7 @@ class JSONProcessing:
         return search_dict
 
     @staticmethod
-    def make_search_json_file(json_filename, data: dict, overwrite=False):
+    def make_search_json_file(json_filename: str, data: dict, overwrite=False):
         """
         Converts an array of search settings into a JSON file
         Args:
@@ -75,6 +75,8 @@ class JSONProcessing:
         Returns: Boolean, True if succeeded
 
         """
+        if not json_filename.endswith(".json"):
+            json_filename += ".json"
         save_path = os.path.join(json_folder, json_filename)
         if JSONProcessing.search_name_exists(save_path) and not overwrite:
             raise FileExistsError("Search already exists, and overwrite flag is false. "
