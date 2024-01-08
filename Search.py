@@ -24,22 +24,6 @@ from Listing import Listing
 # Remove listing data for pid's not in curr_listings from df
 #   Write current listing data with old data removed to csv
 
-# TODO: Save to csv (DONE)
-# TODO: Load from csv (DONE)
-# TODO: Verify saving works (DONE)
-# TODO: Verify loading works (DONE)
-# TODO: Verify deleting listings works (DONE)
-# TODO: Add message when skipping listings (DONE)
-# TODO: If folder present but files missing, go through whole process (DONE)
-# TODO: Switch to os.path.join (DONE)
-# TODO: Create docstrings for Search class. (DONE)
-# TODO: Implement error handling for bad HTML for a listing. (DONE)
-# TODO: Organize distance by buckets (DONE)
-# TODO: Create docstrings for Listing class.
-# TODO: Comment on code.
-# TODO: Send email
-
-
 class Search:
     """Creates a class to scrape and operate Craigslist listings.
 
@@ -58,7 +42,7 @@ class Search:
         self,
         target_lat: float,
         target_lon: float,
-        bedrooms: str,
+        bedrooms: int,
         max_price: str,
         max_dist: str,
         search_savepath: str,
@@ -71,7 +55,10 @@ class Search:
         self.max_price = max_price
         self.max_dist = max_dist
         self.search_savepath = search_savepath
-        self.url = f"https://sfbay.craigslist.org/search/san-francisco-ca/{search_type}?lat={target_lat}&lon={target_lon}&max_bedrooms={bedrooms}&max_price={max_price}&min_bedrooms={bedrooms}&search_distance={max_dist}"
+        if not self.bedrooms:
+            self.url = f"https://sfbay.craigslist.org/search/san-francisco-ca/{search_type}?lat={target_lat}&lon={target_lon}&max_price={max_price}&search_distance={max_dist}"
+        else:
+            self.url = f"https://sfbay.craigslist.org/search/san-francisco-ca/{search_type}?lat={target_lat}&lon={target_lon}&max_bedrooms={bedrooms}&max_price={max_price}&min_bedrooms={bedrooms}&search_distance={max_dist}"
         print(f"Checking URL {self.url}")
         # self.listings = {}  # Maybe dict with pids as keys?
 
@@ -80,134 +67,6 @@ class Search:
         self.search_savepath = search_savepath
         self.pids = set()  # existing pid's
         self.current_run_pids = set()  # current pid's
-
-    def run(self):
-        """Runs all the helper functions in class."""
-
-        self.load_pid_data()
-
-        cont = self.get_listings()
-        if cont == -1:
-            return
-        self.delete_old_listings()
-        if self.low_budget_threshold:
-            self.drop_listings()
-        self.sort_df()
-        self.write_to_csv()
-        self.save_to_html()
-
-    def get_listings(self):
-        """Scrapes data from main page and gets information for each listing.
-
-        Finds listing from main page, then goes through each listing and grabs info
-        using the get_listing_info() function and Listing() class.
-        """
-        source = requests.get(self.url, headers=HEADER)
-        soup = BeautifulSoup(source.text, "html.parser")
-        listing_raw_list = soup.find_all("li")
-        if len(listing_raw_list) > 0:
-            print(f"{len(listing_raw_list)} listings found")
-        else:
-            print("NO LISTINGS FOUND")
-            return -1
-        for i, listing_raw in enumerate(listing_raw_list):
-            self.get_listing_info(listing_raw, i + 1)
-
-    def get_listing_info(self, listing_raw, curr_listing_idx):
-        """Iterates through Results in ResultSet and adds relevant data to a dataframe
-
-        Args:
-            listing_raw (ResultSet): Raw BeautifulSoup HTML data to parse through
-        """
-        curr_listing = Listing(listing_raw)
-
-        # If data exists for this listing, skip it
-        if curr_listing.pid in self.pids:
-            self.current_run_pids.add(curr_listing.pid)
-            print(
-                f"Listing {curr_listing_idx} - {curr_listing.pid} already exists; skipping"
-            )
-            return
-
-        # If listing cannot be processed for some reason, pring and skip. Else, add it to csv
-        try:
-            print(f"PROCESSING listing {curr_listing_idx}")
-            curr_listing.get_info()
-        except:
-            print(
-                f"Could not get data for listing number {curr_listing_idx} - {curr_listing.url}"
-            )
-        else:
-            print(f"Adding {curr_listing.pid} to dataframe")
-            self.df.loc[len(self.df)] = curr_listing.get_data()
-
-    # Sort according to buckets
-    def sort_df(self):
-        """Sorts data according to parameters."""
-        minute = 60
-        # bins = [0,20], (20,30], (30,45]
-        bins = [
-            datetime.timedelta(0, 0 * minute),
-            datetime.timedelta(0, 20 * minute),
-            datetime.timedelta(0, 30 * minute),
-            datetime.timedelta(0, 45 * minute),
-            datetime.timedelta(0, 60 * minute),
-        ]
-        # Journey length labels
-        labels = ["Short", "Medium", "Long", "Very Long"]
-
-        # Create new column called "Cat" to store the category of journey length
-        self.df["Cat"] = pd.cut(self.df["TRAVEL TIME"], bins=bins, labels=labels)
-        # Sort by journey length, then price
-        self.df = self.df.sort_values(by=["Cat", "PRICE ($)"], ascending=True)
-
-    def make_df_pretty(self):
-        """Formats df data to make it more readable and when saving to an HTML file."""
-
-        # Transform travel time format
-        self.df["TRAVEL TIME"] = self.df.apply(
-            lambda x: self.make_HMS(travel_time=x["TRAVEL TIME"]), axis=1
-        )
-        # Code to convert URL column to hyperlink, for HTML email purposes
-        self.df["LINK"] = self.df.apply(
-            lambda x: self.make_clickable(url=x["LINK"]), axis=1
-        )
-        self.df["POSTED"] = self.df.apply(
-            lambda x: self.format_posted(posted=x["POSTED"]), axis=1
-        )
-
-    def save_to_html(self):
-        """Saves df to HTML file."""
-
-        self.make_df_pretty()
-        file_object = open(
-            os.path.join(parent_filepath, self.search_savepath, html_filename), "w+"
-        )
-        self.df = self.df.drop(columns=["PID"])
-
-        # Write to HTML
-        file_object.write(
-            self.df.to_html(escape=False)
-            .replace("<td>", "<td align='center'>")
-            .replace("<th>", "<th align='center'>")
-        )  # escape=False is needed to render HTML links
-
-    def delete_old_listings(self):
-        """Deletes removed listings from craigslist search."""
-
-        old_listings = self.pids - self.current_run_pids
-        if not old_listings:
-            print("No removed listings to be deleted")
-        else:
-            print("Listings to be deleted:\n", old_listings)
-        self.df = self.df[~self.df.PID.isin(old_listings)]
-
-    def write_to_csv(self):
-        """Saves dataframe results to a csv."""
-        # Save all columns except the Cat column to csv
-        self.df.loc[:, self.df.columns != "Cat"].to_csv(
-            os.path.join(parent_filepath, self.search_savepath, csv_filename), mode="w+"
-        )
 
     def load_pid_data(self):
         """Checks if search savepath and csv available, and loads/creates files as appropriate."""
@@ -229,7 +88,125 @@ class Search:
                 # Save pids to a set
                 self.pids = set(self.df["PID"])
                 return
-            print("Savepath directory exists, but no csv exists")
+            print("Savepath directory exists, but no csv exists\n")
+
+    def get_listing_info(self, listing_raw, curr_listing_idx):
+        """Iterates through Results in ResultSet and adds relevant data to a dataframe
+
+        Args:
+            curr_listing_idx:
+            listing_raw (ResultSet): Raw BeautifulSoup HTML data to parse through
+        """
+        curr_listing = Listing(listing_raw)
+
+        # If data exists for this listing, skip it
+        if curr_listing.pid in self.pids:
+            self.current_run_pids.add(curr_listing.pid)
+            print(
+                f"Listing {curr_listing_idx} - {curr_listing.pid} already exists; skipping"
+            )
+            return
+
+        # If listing cannot be processed for some reason, pring and skip. Else, add it to csv
+        try:
+            print(f"PROCESSING listing {curr_listing_idx}")
+            curr_listing.get_info()
+        except:
+            print(
+                f"Could not get data for listing number {curr_listing_idx} - {curr_listing.url}"
+            )
+        else:
+            print(
+                f"Adding {curr_listing.pid} to dataframe, \nposted {curr_listing.posted.days} days ago\nTitle: {curr_listing.title}\nURL: {curr_listing.url}\nx"
+            )
+            self.df.loc[len(self.df)] = curr_listing.get_data()
+
+    def get_listings(self):
+        """Scrapes data from main page and gets information for each listing.
+
+        Finds listing from main page, then goes through each listing and grabs info
+        using the get_listing_info() function and Listing() class.
+        """
+        source = requests.get(self.url, headers=HEADER)
+        soup = BeautifulSoup(source.text, "html.parser")
+        listing_raw_list = soup.find_all("li")
+        if len(listing_raw_list) > 0:
+            print(f"{len(listing_raw_list)} listings found\n")
+        else:
+            print("NO LISTINGS FOUND")
+            return -1
+        for i, listing_raw in enumerate(listing_raw_list):
+            if "see also" in listing_raw.div.string:
+                listing_raw_list.remove(listing_raw)
+                print("removed 'see also' element")
+                continue
+            self.get_listing_info(listing_raw, i + 1)
+
+    def delete_old_listings(self):
+        """Deletes removed listings from craigslist search."""
+
+        old_listings = self.pids - self.current_run_pids
+        if not old_listings:
+            print("No removed listings to be deleted")
+        else:
+            print("Listings to be deleted:\n", old_listings)
+            print(
+                "\nListings to be removed:",
+                self.df[self.df.PID.isin(old_listings)].to_string(),
+                "\n",
+            )
+            self.df = self.df[~self.df.PID.isin(old_listings)]
+
+    def drop_listings(self):
+        """Drops listings below a specified threshold to filter fake listings."""
+        print(
+            "listings to be dropped because of price:",
+            self.df[(self.df["PRICE ($)"] <= self.low_budget_threshold)].to_string(),
+        )
+        self.df = self.df[~(self.df["PRICE ($)"] <= self.low_budget_threshold)]
+    # Sort according to buckets
+
+    def sort_df(self):
+        """Sorts data according to parameters."""
+        minute = 60
+        # bins = [0,20], (20,30], (30,45], (45, 60]
+        bins = [
+            datetime.timedelta(0, 0 * minute),
+            datetime.timedelta(0, 20 * minute),
+            datetime.timedelta(0, 30 * minute),
+            datetime.timedelta(0, 45 * minute),
+            datetime.timedelta(0, 60 * minute),
+        ]
+        # Journey length labels
+        labels = ["Short", "Medium", "Long", "Very Long"]
+
+        # Create new column called "Cat" to store the category of journey length
+        self.df["Cat"] = pd.cut(self.df["TRAVEL TIME"], bins=bins, labels=labels)
+        # Sort by journey length, then price
+        self.df = self.df.sort_values(by=["Cat", "POSTED"], ascending=True)
+
+    def write_to_csv(self):
+        """Saves dataframe results to a csv."""
+        # Save all columns except the Cat column to csv
+        self.df.loc[:, self.df.columns != "Cat"].to_csv(
+            os.path.join(parent_filepath, self.search_savepath, csv_filename), mode="w+"
+        )
+
+    def save_to_html(self):
+        """Saves df to HTML file."""
+
+        self.make_df_pretty()
+        file_object = open(
+            os.path.join(parent_filepath, self.search_savepath, html_filename), "w+"
+        )
+        self.df = self.df.drop(columns=["PID"])
+
+        # Write to HTML
+        file_object.write(
+            self.df.to_html(escape=False)
+            .replace("<td>", "<td align='center'>")
+            .replace("<th>", "<th align='center'>")
+        )  # escape=False is needed to render HTML links
 
     def make_clickable(self, url):
         """Converst url to an HTML hyperlink.
@@ -269,8 +246,33 @@ class Search:
         hours = (posted.seconds) // 60**2
         return f"{days} days, {hours} hours ago"
 
-    def drop_listings(self):
-        """Drops listings below a specified threshold to filter fake listings."""
-        self.df = self.df[~(self.df["PRICE ($)"] <= self.low_budget_threshold)]
+    def make_df_pretty(self):
+        """Formats df data to make it more readable and when saving to an HTML file."""
 
-    # Send email?
+        # Transform travel time format
+        self.df["TRAVEL TIME"] = self.df.apply(
+            lambda x: self.make_HMS(travel_time=x["TRAVEL TIME"]), axis=1
+        )
+        # Code to convert URL column to hyperlink, for HTML email purposes
+        self.df["LINK"] = self.df.apply(
+            lambda x: self.make_clickable(url=x["LINK"]), axis=1
+        )
+        self.df["POSTED"] = self.df.apply(
+            lambda x: self.format_posted(posted=x["POSTED"]), axis=1
+        )
+
+    def run(self):
+        """Runs all the helper functions in class."""
+
+        self.load_pid_data()
+
+        cont = self.get_listings()
+        if cont == -1:
+            return
+        self.delete_old_listings()
+        if self.low_budget_threshold:
+            self.drop_listings()
+        self.sort_df()
+        self.write_to_csv()
+        self.save_to_html()
+
