@@ -15,6 +15,10 @@ class JSONProcessing:
         Returns: Bool
 
         """
+        if not search_name.endswith(".json"):
+            search_name += ".json"
+        if not search_name.startswith(json_folder):
+            search_name = os.path.join(json_folder, search_name)
         return os.path.exists(search_name)
 
     @staticmethod
@@ -60,7 +64,7 @@ class JSONProcessing:
         return search_dict
 
     @staticmethod
-    def make_search_json_file(json_filename, data, overwrite=False):
+    def make_search_json_file(json_filename, data: dict, overwrite=False):
         """
         Converts an array of search settings into a JSON file
         Args:
