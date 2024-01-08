@@ -27,6 +27,18 @@ def show_all_searches():
         print(df)
 
 
+def create_new_search():
+    # Check for name first
+    print("Enter values for your search settings as you are prompted.")
+    while True:
+        name = input("Please enter your search name:\n")
+        if JSONProcessing.search_name_exists(name):
+            print("This search name already exists. If you want to overwrite it, please use the --overwrite argument.")
+        else:
+            break
+    # Remember to check for max_rent < min_rent_cutoff
+    JSONProcessing.make_search_json_file()
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Runs a search on Craigslist for living spaces based on "
                                                  "specified parameters")
@@ -35,13 +47,15 @@ if __name__ == "__main__":
     # Run a search on Craigslist
     parser.add_argument("--run", help="Run a specific Search.")
     # Let user create things one by one - error handling done by JSONProcessing
-    parser.add_argument("--new", help="Create a new Search.")
+    parser.add_argument("--new", help="Create a new Search.", action="store_true")
     # Let user enter blank to not change it, or enter a value to change a value.
     parser.add_argument("--overwrite", help="Overwrite an existing Search with new parameters")
     args = parser.parse_args()
 
     if args.show:
         show_all_searches()
+    if args.new:
+        create_new_search()
 
     # [Price, Distance, Bedrooms, Lat, Lon, search_name, low_threshold, type]
     # search_names = ["one_bedroom_usf", "room_sublet_usf"]
