@@ -5,7 +5,7 @@ from Search import Search
 from consts import USF_LAT_LON, json_folder
 
 
-def show_all_searches():
+def show_all_searches() -> None:
     """
     Shows all existing search settings at a high level
     """
@@ -27,56 +27,65 @@ def show_all_searches():
         print(df)
 
 
-def check_below_zero(num):
+def check_above_zero(num: int) -> bool:
+    """
+    Checks if a number is below zero
+    Args:
+        num: number to be checked
+
+    Returns: True if above zero
+
+    """
     if not num > 0:
         print("This value needs to be greater than zero.")
         return False
     return True
 
 
-def rent_check(min_rent, max_rent):
-    if not (0 < min_rent < max_rent):
-        print("The minimum rent cutoff needs to be less than the maximum rent and greater than zero.")
-        return False
-    return True
+def lat_check(latitude: float) -> bool:
+    """
 
+    Args:
+        latitude: Latitude value
 
-def lat_check(latitude):
+    Returns:
+
+    """
     if not (-90.0 <= latitude <= 90.0):
         print("Latitude must be within [-90.0, 90.0]")
         return False
     return True
 
 
-def lon_check(longitude):
+def lon_check(longitude: float) -> bool:
     if not (-180.0 <= longitude <= 180.0):
         print("Longitude must be within [-180.0, 180.0]")
         return False
     return True
 
 
-def search_type_validation(search_type):
+def search_type_validation(search_type: str) -> bool:
     if not (search_type == "apa" or search_type == "roo"):
         print("Search type must be 'apa' or 'roo'")
         return False
     return True
 
 
-def name_validation(name):
+def name_validation(name: str) -> bool:
     if JSONProcessing.search_name_exists(name):
         print("This search name already exists. If you want to overwrite it, please use the --overwrite argument.")
         return False
     return True
 
 
-def get_input_with_checks_str(prompt, validation_function):
+def get_input_with_checks_str(prompt: str, validation_function) -> str:
     while True:
         user_input = input(prompt)
         if validation_function(user_input):
             return user_input
 
 
-def get_input_with_checks_int(prompt, validation_function):
+def get_input_with_checks_int(prompt: str, validation_function) -> int:
     while True:
         user_input = input(prompt)
         try:
@@ -88,7 +97,7 @@ def get_input_with_checks_int(prompt, validation_function):
             return user_input
 
 
-def get_input_with_checks_float(prompt, validation_function):
+def get_input_with_checks_float(prompt: str, validation_function) -> float:
     while True:
         user_input = input(prompt)
         try:
@@ -100,7 +109,7 @@ def get_input_with_checks_float(prompt, validation_function):
             return user_input
 
 
-def create_new_search(overwrite=False):
+def create_new_search(overwrite: bool = False) -> None:
     # Check for name first
     print("Enter values for your search settings as you are prompted.")
     search_dict = {}
@@ -111,19 +120,16 @@ def create_new_search(overwrite=False):
     search_dict['search_lat'] = get_input_with_checks_float("Please enter your search latitude:\n", lat_check)
     search_dict['search_lon'] = get_input_with_checks_float("Please enter your search longitude:\n", lon_check)
     search_dict['search_radius'] = get_input_with_checks_float("Please enter your desired search radius (in miles):\n",
-                                                               check_below_zero)
-    search_dict['max_rent'] = get_input_with_checks_int("Please enter your maximum rent (in $):\n", check_below_zero)
+                                                               check_above_zero)
+    search_dict['max_rent'] = get_input_with_checks_int("Please enter your maximum rent (in $):\n", check_above_zero)
     search_dict['min_rent_cutoff'] = get_input_with_checks_int("Please enter your minimum rent cutoff (in $):\n",
-                                                               check_below_zero)
+                                                               check_above_zero)
     search_dict['bedrooms'] = get_input_with_checks_int("Please enter the number of bedrooms desired:\n",
-                                                        check_below_zero)
+                                                        check_above_zero)
     search_dict['search_type'] = get_input_with_checks_str("Are you searching for a whole apartment or a sublet? \n("
                                                            "\"apa\" for the whole apartment, \"roo\" to sublet):\n",
                                                            search_type_validation)
     pprint.pprint(search_dict)
-    # Need to do type checks
-
-    # Remember to check for max_rent < min_rent_cutoff
     JSONProcessing.make_search_json_file(json_filename=search_dict['search_name'], data=search_dict, overwrite=overwrite)
 
 
@@ -131,13 +137,24 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Runs a search on Craigslist for living spaces based on "
                                                  "specified parameters")
     # Show a high-level overview of all Searches
-    parser.add_argument("--show", help="Show saved Searches and settings.", action="store_true")
+    parser.add_argument("--show",
+                        help="Show saved Searches and settings.",
+                        action="store_true")
+
     # Run a search on Craigslist
-    parser.add_argument("--run", help="Run a specific Search.")
+    parser.add_argument("--run",
+                        help="Run a specific Search.")
+
     # Let user create things one by one - error handling done by JSONProcessing
-    parser.add_argument("--new", help="Create a new Search.", action="store_true")
+    parser.add_argument("--new",
+                        help="Create a new Search.",
+                        action="store_true")
+
     # Let user enter blank to not change it, or enter a value to change a value.
-    parser.add_argument("--overwrite", help="Overwrite an existing Search with new parameters")
+    parser.add_argument("--overwrite",
+                        help="Overwrite an existing Search with new parameters",
+                        action="store_true")
+
     args = parser.parse_args()
 
     if args.show:
@@ -145,7 +162,7 @@ if __name__ == "__main__":
     if args.new:
         create_new_search()
     if args.overwrite:
-        create_new_search(overwrite=True)
+        create_new_search(args.overwrite)
 
     # [Price, Distance, Bedrooms, Lat, Lon, search_name, low_threshold, type]
     # search_names = ["one_bedroom_usf", "room_sublet_usf"]
