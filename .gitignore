@@ -1,5 +1,3 @@
 *.csv
 *.html
-listing-scraper/one_bedroom_SW listing-scraper/one_bedroom_usf listing-scraper/room_sublet_usf listing-scraper/short_search listing-scraper/three_bedroom_usf listing-scraper/two_bedroom_usf
-listing-scraper/__pycache__
 *.pyc
