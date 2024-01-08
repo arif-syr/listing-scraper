@@ -69,13 +69,6 @@ def name_validation(name):
     return True
 
 
-def search_type_validation(type):
-    if not (type == "roo" or type == "apa"):
-        print("Please enter a valid search type")
-        return False
-    return True
-
-
 def get_input_with_checks_str(prompt, validation_function):
     while True:
         user_input = input(prompt)
@@ -107,11 +100,14 @@ def get_input_with_checks_float(prompt, validation_function):
             return user_input
 
 
-def create_new_search():
+def create_new_search(overwrite=False):
     # Check for name first
     print("Enter values for your search settings as you are prompted.")
     search_dict = {}
-    search_dict['search_name'] = get_input_with_checks_str("Please enter your search name:\n", name_validation)
+    if not overwrite:
+        search_dict['search_name'] = get_input_with_checks_str("Please enter your search name:\n", name_validation)
+    else:
+        search_dict['search_name'] = input("Please enter your search name:\n")
     search_dict['search_lat'] = get_input_with_checks_float("Please enter your search latitude:\n", lat_check)
     search_dict['search_lon'] = get_input_with_checks_float("Please enter your search longitude:\n", lon_check)
     search_dict['search_radius'] = get_input_with_checks_float("Please enter your desired search radius (in miles):\n",
@@ -128,7 +124,7 @@ def create_new_search():
     # Need to do type checks
 
     # Remember to check for max_rent < min_rent_cutoff
-    JSONProcessing.make_search_json_file(json_filename=search_dict['search_name'], data=search_dict)
+    JSONProcessing.make_search_json_file(json_filename=search_dict['search_name'], data=search_dict, overwrite=overwrite)
 
 
 if __name__ == "__main__":
@@ -148,6 +144,8 @@ if __name__ == "__main__":
         show_all_searches()
     if args.new:
         create_new_search()
+    if args.overwrite:
+        create_new_search(overwrite=True)
 
     # [Price, Distance, Bedrooms, Lat, Lon, search_name, low_threshold, type]
     # search_names = ["one_bedroom_usf", "room_sublet_usf"]
