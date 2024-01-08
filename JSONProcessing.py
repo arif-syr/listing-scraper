@@ -82,7 +82,7 @@ class JSONProcessing:
         return
 
     @staticmethod
-    def get_json_dict(json_filename):
+    def get_json_dict(json_filename) -> dict:
         """
         Converts a json into a dict
         Args:
