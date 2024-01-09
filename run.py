@@ -26,7 +26,7 @@ def show_all_searches() -> None:
         # Rename with some units and then print
         df.rename(columns={"search_radius": "search_radius (mi)", "max_rent": "max_rent ($)",
                            "min_rent_cutoff": "min_rent_cutoff ($)"}, inplace=True)
-        print(df)
+        print(df.to_string())
 
 
 def check_above_zero(num: int) -> bool:
