@@ -1,4 +1,6 @@
 import argparse, pprint
+import re
+
 import pandas as pd
 from JSONProcessing import JSONProcessing
 from Search import Search
@@ -72,8 +74,15 @@ def search_type_validation(search_type: str) -> bool:
 
 
 def name_validation(name: str) -> bool:
-    if JSONProcessing.search_name_exists(name):
+    validation_regex = "[A-Za-z0-9_-]*"
+    if not (re.fullmatch(validation_regex, name)):
+        print("Your search can only have the upper or lowercase characters, digits from 0-9, hyphens and underscores")
+        return False
+    elif JSONProcessing.search_name_exists(name):
         print("This search name already exists. If you want to overwrite it, please use the --overwrite argument.")
+        return False
+    elif name == "Q":
+        print("This name is reserved and cannot be used as a search name.")
         return False
     return True
 
@@ -143,7 +152,8 @@ if __name__ == "__main__":
 
     # Run a search on Craigslist
     parser.add_argument("--run",
-                        help="Run a specific Search.")
+                        help="Run a specific Search from available searches.",
+                        action="store_true")
 
     # Let user create things one by one - error handling done by JSONProcessing
     parser.add_argument("--new",
@@ -163,6 +173,18 @@ if __name__ == "__main__":
         create_new_search()
     if args.overwrite:
         create_new_search(args.overwrite)
+    if args.run:
+        show_all_searches()
+        while True:
+            current_search = input("Which search do you want to run?\n")
+            if current_search == "Q":
+                break
+            if JSONProcessing.search_name_exists(current_search):
+                tst = Search(JSONProcessing.get_json_dict(current_search))
+                tst.run()
+            else:
+                print("This search does not exist. Please try again, or type 'Q' to exit.")
+                continue
 
     # [Price, Distance, Bedrooms, Lat, Lon, search_name, low_threshold, type]
     # search_names = ["one_bedroom_usf", "room_sublet_usf"]
