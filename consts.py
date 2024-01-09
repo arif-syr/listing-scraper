@@ -5,6 +5,7 @@ HEADER = {
 }
 html_filename = "listings.html"
 csv_filename = "listings.csv"
+
 dtypes = {
     "PID": "int64",  # int64
     "TITLE": "str",  # str
@@ -15,6 +16,7 @@ dtypes = {
     "CROW_DISTANCE": "float64",  # float
     "POSTED": "str",  # timedelta object
 }
+
 cols = [
     "PID",  # int64
     "TITLE",  # str
@@ -26,11 +28,12 @@ cols = [
     "POSTED",  # timedelta64[ns]
 ]
 
-required_search_cols = {'max_rent',
-                        'search_radius',
-                        'bedrooms',
-                        'search_lat',
-                        'search_lon',
-                        'search_name'}
+required_search_cols = {"max_rent",
+                        "search_radius",
+                        "bedrooms",
+                        "search_lat",
+                        "search_lon",
+                        "search_name",
+                        "min_rent_cutoff"}
 
 json_folder = "./json-searches"
