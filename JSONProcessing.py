@@ -1,12 +1,29 @@
 import json
 import os
-import pprint
 
 from consts import json_folder
 
+
 class JSONProcessing:
     @staticmethod
-    def search_name_exists(search_name: str):
+    def json_filename_to_path(json_filename: str) -> str:
+        """
+        Converts a path to a Search to the path relative to root. Appends .json to filename if it does not exist,
+        and joins the json folder and search/json filename to give a full path relative to root.
+        Args:
+            json_filename: name of the Search or .json of the Search
+
+        Returns: string of full path to .json file relative to root
+
+        """
+        if not json_filename.endswith(".json"):
+            json_filename += ".json"
+        if not json_filename.startswith(json_folder):
+            json_filename = os.path.join(json_folder, json_filename)
+        return json_filename
+
+    @staticmethod
+    def search_name_exists(search_name: str) -> bool:
         """
         Checks if search name exists
         Args:
@@ -15,15 +32,12 @@ class JSONProcessing:
         Returns: Bool
 
         """
-        if not search_name.endswith(".json"):
-            search_name += ".json"
-        if not search_name.startswith(json_folder):
-            search_name = os.path.join(json_folder, search_name)
+        search_name = JSONProcessing.json_filename_to_path(search_name)
         return os.path.exists(search_name)
 
     @staticmethod
     def create_search_dict(max_rent: int, search_radius: float, bedrooms: int, search_lat: float, search_lon: float,
-                           search_name: str, min_rent_cutoff: int, search_type: str):
+                           search_name: str, min_rent_cutoff: int, search_type: str) -> dict:
         """
         Creates a dictionary out of parameters and returns it
         Args:
@@ -64,7 +78,7 @@ class JSONProcessing:
         return search_dict
 
     @staticmethod
-    def make_search_json_file(json_filename: str, data: dict, overwrite=False):
+    def make_search_json_file(json_filename: str, data: dict, overwrite=False) -> bool:
         """
         Converts an array of search settings into a JSON file
         Args:
@@ -75,20 +89,17 @@ class JSONProcessing:
         Returns: Boolean, True if succeeded
 
         """
-        if not json_filename.endswith(".json"):
-            json_filename += ".json"
-        save_path = os.path.join(json_folder, json_filename)
+        save_path = JSONProcessing.json_filename_to_path(json_filename)
         if JSONProcessing.search_name_exists(save_path) and not overwrite:
             raise FileExistsError("Search already exists, and overwrite flag is false. "
                                   "Rename the search or overwrite the file please.")
 
         with open(save_path, "w") as output_file:
             json.dump(fp=output_file, obj=data, indent=4)
-
-        return
+            return True
 
     @staticmethod
-    def get_json_dict(json_filename) -> dict:
+    def get_json_dict(json_filename: str) -> dict:
         """
         Converts a json into a dict
         Args:
@@ -97,7 +108,7 @@ class JSONProcessing:
         Returns: search data in dict format
 
         """
-        json_path = os.path.join(json_folder, json_filename)
+        json_path = JSONProcessing.json_filename_to_path(json_filename)
         if not JSONProcessing.search_name_exists(json_path):
             raise FileNotFoundError("Search .json does not exist")
         with open(json_path, "r") as input_file:
@@ -126,4 +137,3 @@ class JSONProcessing:
     #                                      data=search, overwrite=True)
     # dict = JSONProcessing.get_json_dict(search['search_name'] + ".json")
     # pprint.pprint(dict)
-
