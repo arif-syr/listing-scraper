@@ -3,13 +3,16 @@ from consts import (
     USF_LAT_LON,
     HEADER,
     cols,
-    parent_filepath,
     csv_filename,
     html_filename,
     dtypes,
+    required_search_cols,
+    json_folder
 )
+from constspriv import parent_filepath
 from bs4 import BeautifulSoup
 from Listing import Listing
+
 
 # Article on pd.cut https://towardsdatascience.com/how-to-bin-numerical-data-with-pandas-fe5146c9dc55
 # https://towardsdatascience.com/all-pandas-cut-you-should-know-for-transforming-numerical-data-into-categorical-data-1370cf7f4c4f
@@ -25,70 +28,90 @@ from Listing import Listing
 #   Write current listing data with old data removed to csv
 
 class Search:
+    # def __init__(
+    #     self,
+    #     target_lat: float,
+    #     target_lon: float,
+    #     bedrooms: int,
+    #     max_price: str,
+    #     max_dist: str,
+    #     search_savepath: str,
+    #     low_budget_threshold: int = 0,
+    #     search_type: str = "apa",
+    # ) -> None:
+    #     self.target_lat = target_lat
+    #     self.target_lon = target_lon
+    #     self.bedrooms = bedrooms
+    #     self.max_price = max_price
+    #     self.max_dist = max_dist
+    #     self.search_savepath = search_savepath
+    #     if not self.bedrooms:
+    #         self.url = f"https://sfbay.craigslist.org/search/san-francisco-ca/{search_type}?lat={target_lat}&lon={target_lon}&max_price={max_price}&search_distance={max_dist}"
+    #     else:
+    #         self.url = f"https://sfbay.craigslist.org/search/san-francisco-ca/{search_type}?lat={target_lat}&lon={target_lon}&max_bedrooms={bedrooms}&max_price={max_price}&min_bedrooms={bedrooms}&search_distance={max_dist}"
+    #     print(f"Checking URL {self.url}")
+    #     # self.listings = {}  # Maybe dict with pids as keys?
+    #
+    #     # Dir where csv's and html files are stored
+    #     self.low_budget_threshold = low_budget_threshold
+    #     self.search_savepath = search_savepath
+    #     self.pids = set()  # existing pid's
+    #     self.current_run_pids = set()  # current pid's
     """Creates a class to scrape and operate Craigslist listings.
+    search_lat (float): Latitude of search.
+    search_lon (float): Longitude of search.
+    bedrooms (str): No of bedrooms interested in.
+    max_rent (str): Maximum budget.
+    search_radius (str): Radius of search.
+    search_savepath (str): Directory to store results in.
+    low_budget_threshold (int): Filter out listings below this price. Defaults to 0.
+    search_type (str): Type of search - "apa" for available apartments, "roo" for rooms in existing leases.
+        Defaults to "apa".
 
     Args:
-        target_lat (float): Latitude of search.
-        target_lon (float): Longitude of search.
-        bedrooms (str): No of bedrooms interested in.
-        max_price (str): Maximum budget.
-        max_dist (str): Radius of search.
-        search_savepath (str): Directory to store results in.
-        low_budget_threshold (int, optional): Filter out listings below this price. Defaults to 0.
-        search_type (str, optional): Type of search - "apa" for available apartments, "roo" for rooms in existing leases. Defaults to "apa".
+        data_dict: Dictionary containing all the search parameters
     """
 
-    def __init__(
-        self,
-        target_lat: float,
-        target_lon: float,
-        bedrooms: int,
-        max_price: str,
-        max_dist: str,
-        search_savepath: str,
-        low_budget_threshold: int = 0,
-        search_type: str = "apa",
-    ) -> None:
-        self.target_lat = target_lat
-        self.target_lon = target_lon
-        self.bedrooms = bedrooms
-        self.max_price = max_price
-        self.max_dist = max_dist
-        self.search_savepath = search_savepath
-        if not self.bedrooms:
-            self.url = f"https://sfbay.craigslist.org/search/san-francisco-ca/{search_type}?lat={target_lat}&lon={target_lon}&max_price={max_price}&search_distance={max_dist}"
-        else:
-            self.url = f"https://sfbay.craigslist.org/search/san-francisco-ca/{search_type}?lat={target_lat}&lon={target_lon}&max_bedrooms={bedrooms}&max_price={max_price}&min_bedrooms={bedrooms}&search_distance={max_dist}"
-        print(f"Checking URL {self.url}")
-        # self.listings = {}  # Maybe dict with pids as keys?
+    def __init__(self, data_dict: dict) -> None:
+        if not all(key in data_dict for key in required_search_cols):
+            raise KeyError("Search settings missing values.")
+        self.search_name = data_dict['search_name']
+        self.max_rent = data_dict['max_rent']
+        self.search_radius = data_dict['search_radius']
+        self.bedrooms = data_dict['bedrooms']
+        self.search_lat = data_dict['search_lat']
+        self.search_lon = data_dict['search_lon']
+        self.min_rent_cutoff = data_dict['min_rent_cutoff']
+        self.search_type = data_dict['search_type']
 
         # Dir where csv's and html files are stored
-        self.low_budget_threshold = low_budget_threshold
-        self.search_savepath = search_savepath
+
+        self.url = (f"https://sfbay.craigslist.org/search/san-francisco-ca/{self.search_type}?lat={self.search_lat}"
+                    f"&lon={self.search_lon}&max_price={self.max_rent}&search_distance={self.search_radius}"
+                    f"&max_bedrooms={self.bedrooms}")
+        print(f"Checking URL {self.url}")
+        # self.listings = {}  # Maybe dict with pids as keys?
         self.pids = set()  # existing pid's
         self.current_run_pids = set()  # current pid's
+        self.df = pd.DataFrame(columns=cols)
 
     def load_pid_data(self):
         """Checks if search savepath and csv available, and loads/creates files as appropriate."""
 
-        self.df = pd.DataFrame(columns=cols)
-        if not os.path.isdir(os.path.join(parent_filepath, self.search_savepath)):
-            print("Making directory for savepath")
-            os.mkdir(os.path.join(parent_filepath, self.search_savepath))
+        csv_path = os.path.join(json_folder, self.search_name + ".csv")
+        if not os.path.exists(csv_path):
+            print("This search has no .csv of existing listings")
+            # os.mkdir(os.path.join(parent_filepath, self.search_savepath))
         else:
-            csv_path = os.path.join(parent_filepath, self.search_savepath, csv_filename)
-            if os.path.exists(csv_path):
-                self.df = pd.read_csv(csv_path, index_col=0)
+            self.df = pd.read_csv(csv_path, index_col=0)
 
-                # Convert travel time and posted columns to timedelta objects
-                self.df["TRAVEL TIME"] = pd.to_timedelta(self.df["TRAVEL TIME"])
-                self.df["POSTED"] = pd.to_timedelta(self.df["POSTED"])
+            # Convert travel time and posted columns to timedelta objects
+            self.df["TRAVEL TIME"] = pd.to_timedelta(self.df["TRAVEL TIME"])
+            self.df["POSTED"] = pd.to_timedelta(self.df["POSTED"])
 
-                print("Loaded df from csv")
-                # Save pids to a set
-                self.pids = set(self.df["PID"])
-                return
-            print("Savepath directory exists, but no csv exists\n")
+            print("Loaded df from csv")
+            # Save pids to a set
+            self.pids = set(self.df["PID"])
 
     def get_listing_info(self, listing_raw, curr_listing_idx):
         """Iterates through Results in ResultSet and adds relevant data to a dataframe
@@ -107,7 +130,7 @@ class Search:
             )
             return
 
-        # If listing cannot be processed for some reason, pring and skip. Else, add it to csv
+        # If listing cannot be processed for some reason, print and skip. Else, add it to csv
         try:
             print(f"PROCESSING listing {curr_listing_idx}")
             curr_listing.get_info()
@@ -164,6 +187,7 @@ class Search:
             self.df[(self.df["PRICE ($)"] <= self.low_budget_threshold)].to_string(),
         )
         self.df = self.df[~(self.df["PRICE ($)"] <= self.low_budget_threshold)]
+
     # Sort according to buckets
 
     def sort_df(self):
@@ -243,7 +267,7 @@ class Search:
             str: readable format of above.
         """
         days = posted.days
-        hours = (posted.seconds) // 60**2
+        hours = (posted.seconds) // 60 ** 2
         return f"{days} days, {hours} hours ago"
 
     def make_df_pretty(self):
@@ -265,14 +289,14 @@ class Search:
         """Runs all the helper functions in class."""
 
         self.load_pid_data()
+        print(self.df)
 
-        cont = self.get_listings()
-        if cont == -1:
-            return
-        self.delete_old_listings()
-        if self.low_budget_threshold:
-            self.drop_listings()
-        self.sort_df()
-        self.write_to_csv()
-        self.save_to_html()
-
+        # cont = self.get_listings()
+        # if cont == -1:
+        #     return
+        # self.delete_old_listings()
+        # if self.low_budget_threshold:
+        #     self.drop_listings()
+        # self.sort_df()
+        # self.write_to_csv()
+        # self.save_to_html()
