@@ -3,8 +3,6 @@ from consts import (
     USF_LAT_LON,
     HEADER,
     cols,
-    csv_filename,
-    html_filename,
     dtypes,
     required_search_cols,
     json_folder
@@ -122,6 +120,7 @@ class Search:
         """
         new_listings = []
         for curr_listing_idx, listing_raw in enumerate(listing_raw_list):
+            curr_listing_idx += 1  # For one-indexing
             curr_listing = Listing(listing_raw)
             self.current_run_pids.add(curr_listing.pid)
 
@@ -199,9 +198,9 @@ class Search:
         """Drops listings below a specified threshold to filter fake listings."""
         print(
             "listings to be dropped because of price:",
-            self.df[(self.df["PRICE ($)"] <= self.low_budget_threshold)].to_string(),
+            self.df[(self.df["PRICE ($)"] <= self.min_rent_cutoff)].to_string(),
         )
-        self.df = self.df[~(self.df["PRICE ($)"] <= self.low_budget_threshold)]
+        self.df = self.df[~(self.df["PRICE ($)"] <= self.min_rent_cutoff)]
 
     # Sort according to buckets
     def sort_df(self):
@@ -227,24 +226,23 @@ class Search:
         """Saves dataframe results to a csv."""
         # Save all columns except the Cat column to csv
         self.df.loc[:, self.df.columns != "Cat"].to_csv(
-            os.path.join(parent_filepath, self.search_savepath, csv_filename), mode="w+"
+            os.path.join(json_folder, self.search_name + ".csv"), mode="w+"
         )
 
     def save_to_html(self):
         """Saves df to HTML file."""
-
         self.make_df_pretty()
-        file_object = open(
-            os.path.join(parent_filepath, self.search_savepath, html_filename), "w+"
-        )
-        self.df = self.df.drop(columns=["PID"])
+        html_path = os.path.join(json_folder, self.search_name + ".html")
+        with open(html_path, "w+") as html_file:
+            self.df = self.df.drop(columns=["PID"])
+            print(html_path)
 
-        # Write to HTML
-        file_object.write(
-            self.df.to_html(escape=False)
-            .replace("<td>", "<td align='center'>")
-            .replace("<th>", "<th align='center'>")
-        )  # escape=False is needed to render HTML links
+            # Write to HTML
+            html_file.write(
+                self.df.to_html(escape=False)
+                .replace("<td>", "<td align='center'>")
+                .replace("<th>", "<th align='center'>")
+            )  # escape=False is needed to render HTML links
 
     def make_clickable(self, url):
         """Converst url to an HTML hyperlink.
@@ -309,8 +307,7 @@ class Search:
             print("Please overwrite with new settings or wait for new listings.")
             return
         self.delete_old_listings()
-        # if self.low_budget_threshold:
-        #     self.drop_listings()
-        # self.sort_df()
-        # self.write_to_csv()
-        # self.save_to_html()
+        self.drop_listings()
+        self.sort_df()
+        self.write_to_csv()
+        self.save_to_html()
