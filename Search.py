@@ -152,17 +152,20 @@ class Search:
         """
         source = requests.get(self.url, headers=HEADER)
         soup = BeautifulSoup(source.text, "html.parser")
+        # Should find most listings, unless result set is huge
         listing_raw_list = soup.find_all("li")
+
         if len(listing_raw_list) > 0:
             print(f"{len(listing_raw_list)} listings found\n")
         else:
             print("NO LISTINGS FOUND")
             return -1
+
+        if listing_raw_list[0].div.text == "see also":
+            print("Removed 'see also' div")
+            del listing_raw_list[0]
+
         for i, listing_raw in enumerate(listing_raw_list):
-            if "see also" in listing_raw.div.string:
-                listing_raw_list.remove(listing_raw)
-                print("removed 'see also' element")
-                continue
             self.get_listing_info(listing_raw, i + 1)
 
     def delete_old_listings(self):
@@ -289,9 +292,7 @@ class Search:
         """Runs all the helper functions in class."""
 
         self.load_pid_data()
-        print(self.df)
-
-        # cont = self.get_listings()
+        cont = self.get_listings()
         # if cont == -1:
         #     return
         # self.delete_old_listings()
