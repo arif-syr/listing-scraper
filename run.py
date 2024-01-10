@@ -53,6 +53,8 @@ def lat_check(latitude: float) -> bool:
     Returns:
 
     """
+    print("NOTE: If latitude and longitude are outside the USA or Craigslist's map ranges, you may get nonsensical"
+          "results in return when running the search.")
     if not (-90.0 <= latitude <= 90.0):
         print("Latitude must be within [-90.0, 90.0]")
         return False
