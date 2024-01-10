@@ -115,16 +115,18 @@ class Search:
 
     def get_listing_info(self, listing_raw, curr_listing_idx):
         """Iterates through Results in ResultSet and adds relevant data to a dataframe
+        Creates Listing() objects using the listing HTML.
+        Adds
 
         Args:
-            curr_listing_idx:
-            listing_raw (ResultSet): Raw BeautifulSoup HTML data to parse through
+            curr_listing_idx: index of current listing
+            listing_raw (ResultSet): Raw HTML of listing on search page. Used to parse actual listing info.
         """
         curr_listing = Listing(listing_raw)
+        self.current_run_pids.add(curr_listing.pid)
 
         # If data exists for this listing, skip it
         if curr_listing.pid in self.pids:
-            self.current_run_pids.add(curr_listing.pid)
             print(
                 f"Listing {curr_listing_idx} - {curr_listing.pid} already exists; skipping"
             )
@@ -134,10 +136,11 @@ class Search:
         try:
             print(f"PROCESSING listing {curr_listing_idx}")
             curr_listing.get_info()
-        except:
+        except Exception as e:
             print(
                 f"Could not get data for listing number {curr_listing_idx} - {curr_listing.url}"
             )
+            print(f"Exception: \n{e}")
         else:
             print(
                 f"Adding {curr_listing.pid} to dataframe, \nposted {curr_listing.posted.days} days ago\nTitle: {curr_listing.title}\nURL: {curr_listing.url}\nx"
@@ -146,9 +149,12 @@ class Search:
 
     def get_listings(self):
         """Scrapes data from main page and gets information for each listing.
+        - gets the response from the URL and creates a soup out of it.
+        - finds all the list items and grabs their HTML <li> tag
+        - removes non-listing list items
+        - Calls get_listing_info() on linking HTML to get info about listings
 
-        Finds listing from main page, then goes through each listing and grabs info
-        using the get_listing_info() function and Listing() class.
+        Returns: -1 if no listings, +1 if yes listings
         """
         source = requests.get(self.url, headers=HEADER)
         soup = BeautifulSoup(source.text, "html.parser")
@@ -167,6 +173,7 @@ class Search:
 
         for i, listing_raw in enumerate(listing_raw_list):
             self.get_listing_info(listing_raw, i + 1)
+        return 1
 
     def delete_old_listings(self):
         """Deletes removed listings from craigslist search."""
@@ -293,8 +300,10 @@ class Search:
 
         self.load_pid_data()
         cont = self.get_listings()
-        # if cont == -1:
-        #     return
+        if cont == -1:
+            print("Current search settings have no results.")
+            print("Please overwrite with new settings or wait for new listings.")
+            return
         # self.delete_old_listings()
         # if self.low_budget_threshold:
         #     self.drop_listings()
