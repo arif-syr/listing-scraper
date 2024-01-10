@@ -113,39 +113,41 @@ class Search:
             # Save pids to a set
             self.pids = set(self.df["PID"])
 
-    def get_listing_info(self, listing_raw, curr_listing_idx):
-        """Iterates through Results in ResultSet and adds relevant data to a dataframe
-        Creates Listing() objects using the listing HTML.
-        Adds
+    def get_listing_info(self, listing_raw_list) -> []:
+        """Iterates through listing HTML and adds relevant data to a list.
+        Creates Listing() objects using the listing HTML and returns them in a list to be concatenated with df
 
         Args:
-            curr_listing_idx: index of current listing
-            listing_raw (ResultSet): Raw HTML of listing on search page. Used to parse actual listing info.
+            listing_raw_list: List of bs4 Tag objects representing Listing HTML
         """
-        curr_listing = Listing(listing_raw)
-        self.current_run_pids.add(curr_listing.pid)
+        new_listings = []
+        for curr_listing_idx, listing_raw in enumerate(listing_raw_list):
+            curr_listing = Listing(listing_raw)
+            self.current_run_pids.add(curr_listing.pid)
 
-        # If data exists for this listing, skip it
-        if curr_listing.pid in self.pids:
-            print(
-                f"Listing {curr_listing_idx} - {curr_listing.pid} already exists; skipping"
-            )
-            return
+            # If data exists for this listing, skip it
+            if curr_listing.pid in self.pids:
+                print(
+                    f"Listing {curr_listing_idx} - {curr_listing.pid} already exists; skipping"
+                )
+                continue
 
-        # If listing cannot be processed for some reason, print and skip. Else, add it to csv
-        try:
-            print(f"PROCESSING listing {curr_listing_idx}")
-            curr_listing.get_info()
-        except Exception as e:
-            print(
-                f"Could not get data for listing number {curr_listing_idx} - {curr_listing.url}"
-            )
-            print(f"Exception: \n{e}")
-        else:
-            print(
-                f"Adding {curr_listing.pid} to dataframe, \nposted {curr_listing.posted.days} days ago\nTitle: {curr_listing.title}\nURL: {curr_listing.url}\nx"
-            )
-            self.df.loc[len(self.df)] = curr_listing.get_data()
+            # If listing cannot be processed for some reason, print and skip. Else, add it to csv
+            try:
+                print(f"PROCESSING listing {curr_listing_idx}")
+                curr_listing.generate_listing_data()
+            except Exception as e:
+                print(
+                    f"Could not get data for listing number {curr_listing_idx} - {curr_listing.url}"
+                )
+                print(f"Exception: \n{e}")
+            else:
+                print(
+                    f"Adding {curr_listing.pid} to dataframe, \nposted {curr_listing.posted.days} days ago"
+                    f"\nTitle: {curr_listing.title}\nURL: {curr_listing.url}\n"
+                )
+                new_listings.append(curr_listing.get_data())
+        return new_listings
 
     def get_listings(self):
         """Scrapes data from main page and gets information for each listing.
@@ -171,24 +173,27 @@ class Search:
             print("Removed 'see also' div")
             del listing_raw_list[0]
 
-        for i, listing_raw in enumerate(listing_raw_list):
-            self.get_listing_info(listing_raw, i + 1)
+        new_listings = self.get_listing_info(listing_raw_list)
+        new_listings_df = pd.DataFrame(new_listings, columns=cols)
+        print(f"old df size: {len(self.df)}")
+        self.df = pd.concat([self.df, new_listings_df])
+        print(f"new df size: {len(self.df)}")
         return 1
 
     def delete_old_listings(self):
         """Deletes removed listings from craigslist search."""
 
         old_listings = self.pids - self.current_run_pids
+        preserved_listings = self.current_run_pids.intersection(self.pids)
         if not old_listings:
             print("No removed listings to be deleted")
         else:
             print("Listings to be deleted:\n", old_listings)
-            print(
-                "\nListings to be removed:",
-                self.df[self.df.PID.isin(old_listings)].to_string(),
-                "\n",
-            )
+            print(f"df size before removing old pids: {len(self.df)}")
             self.df = self.df[~self.df.PID.isin(old_listings)]
+            print(f"new df size after removing old pids: {len(self.df)}")
+            print(self.df.to_string())
+            print(f"preserved listings: {preserved_listings}")
 
     def drop_listings(self):
         """Drops listings below a specified threshold to filter fake listings."""
@@ -199,7 +204,6 @@ class Search:
         self.df = self.df[~(self.df["PRICE ($)"] <= self.low_budget_threshold)]
 
     # Sort according to buckets
-
     def sort_df(self):
         """Sorts data according to parameters."""
         minute = 60
@@ -304,7 +308,7 @@ class Search:
             print("Current search settings have no results.")
             print("Please overwrite with new settings or wait for new listings.")
             return
-        # self.delete_old_listings()
+        self.delete_old_listings()
         # if self.low_budget_threshold:
         #     self.drop_listings()
         # self.sort_df()
