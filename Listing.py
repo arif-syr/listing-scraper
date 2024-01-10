@@ -23,7 +23,7 @@ class Listing:
         self.travel_time = datetime.timedelta()
 
     # Gets all attributes
-    def get_info(self):
+    def generate_listing_data(self):
         # Usually price= $1,000. So replace comma with empty char and convert it to an int.
         self.price = int(self.raw.find(class_="price").text[1:].replace(",", ""))
         self.title = self.raw.find(class_="title").text
