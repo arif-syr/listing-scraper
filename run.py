@@ -4,7 +4,7 @@ import re
 import pandas as pd
 from JSONProcessing import JSONProcessing
 from Search import Search
-from consts import USF_LAT_LON, json_folder
+from consts import json_folder
 
 
 def show_all_searches() -> None:
@@ -46,11 +46,11 @@ def check_above_zero(num: int) -> bool:
 
 def lat_check(latitude: float) -> bool:
     """
-
+    Validation function to check user-entered latitude value
     Args:
         latitude: Latitude value
 
-    Returns:
+    Returns: true if valid latitude
 
     """
     print("NOTE: If latitude and longitude are outside the USA or Craigslist's map ranges, you may get nonsensical "
@@ -62,6 +62,14 @@ def lat_check(latitude: float) -> bool:
 
 
 def lon_check(longitude: float) -> bool:
+    """
+    Validation function to check user-entered longitude value
+    Args:
+        longitude: Longitude value
+
+    Returns: true if valid longitude
+
+    """
     if not (-180.0 <= longitude <= 180.0):
         print("Longitude must be within [-180.0, 180.0]")
         return False
@@ -69,6 +77,14 @@ def lon_check(longitude: float) -> bool:
 
 
 def search_type_validation(search_type: str) -> bool:
+    """
+    Validation function to check user-entered search type
+    Args:
+        search_type: type of rental search
+
+    Returns: true if valid search type
+
+    """
     if not (search_type == "apa" or search_type == "roo"):
         print("Search type must be 'apa' or 'roo'")
         return False
@@ -76,9 +92,17 @@ def search_type_validation(search_type: str) -> bool:
 
 
 def name_validation(name: str) -> bool:
+    """
+    Validation function to check user-entered Search name
+    Args:
+        name: name of Search
+
+    Returns: True if search is valid
+
+    """
     validation_regex = "[A-Za-z0-9_-]*"
     if not (re.fullmatch(validation_regex, name)):
-        print("Your search can only have the upper or lowercase characters, digits from 0-9, hyphens and underscores")
+        print("Your search can only have upper or lowercase characters, digits from 0-9, hyphens and underscores")
         return False
     elif JSONProcessing.search_name_exists(name):
         print("This search name already exists. If you want to overwrite it, please use the --overwrite argument.")
@@ -89,14 +113,33 @@ def name_validation(name: str) -> bool:
     return True
 
 
-def get_input_with_checks_str(prompt: str, validation_function) -> str:
+def get_input_with_checks_str(prompt: str, validation_function: callable) -> str:
+    """
+    Method to handle validating a user-input string with a corresponding validation function.
+    Args:
+        prompt: User prompt for input
+        validation_function: function to validate input with
+
+    Returns: user input, if valid
+
+    """
     while True:
         user_input = input(prompt)
         if validation_function(user_input):
             return user_input
 
 
-def get_input_with_checks_int(prompt: str, validation_function) -> int:
+def get_input_with_checks_int(prompt: str, validation_function: callable) -> int:
+    """
+    Method to handle validating a user-input integer with a corresponding validation function.
+    Also converts the user input to an integer if valid.
+    Args:
+        prompt: User prompt for input
+        validation_function: function to validate input with
+
+    Returns: user input, if valid
+
+    """
     while True:
         user_input = input(prompt)
         try:
@@ -108,7 +151,17 @@ def get_input_with_checks_int(prompt: str, validation_function) -> int:
             return user_input
 
 
-def get_input_with_checks_float(prompt: str, validation_function) -> float:
+def get_input_with_checks_float(prompt: str, validation_function: callable) -> float:
+    """
+    Method to handle validating a user-input float with a corresponding validation function.
+    Also converts the user input to a float if valid.
+    Args:
+        prompt: User prompt for input
+        validation_function: function to validate input with
+
+    Returns: user input, if valid
+
+    """
     while True:
         user_input = input(prompt)
         try:
@@ -121,11 +174,17 @@ def get_input_with_checks_float(prompt: str, validation_function) -> float:
 
 
 def create_new_search(overwrite: bool = False) -> None:
-    # Check for name first
+    """
+    Creates a new Search and saves it as a .json file. Also validates inputs.
+    Args:
+        overwrite: flag for whether a Search should be overwritten
+    """
     print("Enter values for your search settings as you are prompted.")
     search_dict = {}
+    # Check if user wants to overwrite a Search
     if not overwrite:
-        search_dict['search_name'] = get_input_with_checks_str("Please enter your search name:\n", name_validation)
+        search_dict['search_name'] = get_input_with_checks_str("Please enter your search name:\n",
+                                                               name_validation)
     else:
         while True:
             search_name = input("Please enter your search name:\n")
@@ -135,17 +194,19 @@ def create_new_search(overwrite: bool = False) -> None:
             else:
                 print("That search does not exist. Please enter the name of an existing search.")
                 print(show_all_searches())
+
     search_dict['search_lat'] = get_input_with_checks_float("Please enter your search latitude:\n", lat_check)
     search_dict['search_lon'] = get_input_with_checks_float("Please enter your search longitude:\n", lon_check)
-    search_dict['search_radius'] = get_input_with_checks_float("Please enter your desired search radius (in miles):\n",
-                                                               check_above_zero)
-    search_dict['max_rent'] = get_input_with_checks_int("Please enter your maximum rent (in $):\n", check_above_zero)
+    search_dict['search_radius'] = get_input_with_checks_float("Please enter your desired search radius "
+                                                               "(in miles):\n", check_above_zero)
+    search_dict['max_rent'] = get_input_with_checks_int("Please enter your maximum rent (in $):\n",
+                                                        check_above_zero)
     search_dict['min_rent_cutoff'] = get_input_with_checks_int("Please enter your minimum rent cutoff (in $):\n",
                                                                check_above_zero)
     search_dict['bedrooms'] = get_input_with_checks_int("Please enter the number of bedrooms desired:\n",
                                                         check_above_zero)
-    search_dict['search_type'] = get_input_with_checks_str("Are you searching for a whole apartment or a sublet? \n("
-                                                           "\"apa\" for the whole apartment, \"roo\" to sublet):\n",
+    search_dict['search_type'] = get_input_with_checks_str("Are you searching for a whole apartment or a sublet?"
+                                                           " \n(\"apa\" for the whole apartment, \"roo\" to sublet):\n",
                                                            search_type_validation)
     pprint.pprint(search_dict)
     JSONProcessing.make_search_json_file(json_filename=search_dict['search_name'], data=search_dict, overwrite=overwrite)
@@ -194,24 +255,3 @@ if __name__ == "__main__":
             else:
                 print("This search does not exist. Please try again, or type 'Q' to exit.")
                 continue
-
-    # [Price, Distance, Bedrooms, Lat, Lon, search_name, low_threshold, type]
-    # search_names = ["one_bedroom_usf", "room_sublet_usf"]
-    # for search in search_names:
-    #     search_vals = JSONProcessing.get_json_dict(search + ".json")
-    #     pprint.pprint(search_vals)
-    # print(
-    #     f"\nSearch for {setting[2]} room at a max price of {setting[0]} and a search radius of {setting[1]}. Setting = {setting[7]}"
-    # )
-    # low_budget_threshold = 0 if len(setting) < 7 else setting[6]
-    # tst = Search(
-    #     max_price=setting[0],
-    #     max_dist=setting[1],
-    #     bedrooms=setting[2],
-    #     target_lat=setting[3],
-    #     target_lon=setting[4],
-    #     search_savepath=setting[5],
-    #     low_budget_threshold=low_budget_threshold,
-    #     search_type=setting[7],
-    # )
-    # tst.run()
