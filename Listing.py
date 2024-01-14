@@ -21,7 +21,7 @@ class Listing:
 
         # Get listing url
         self.url = self.raw.find("a").get("href")
-        # Get unique id for listing
+        # Get unique id for listing. Stored as <url>/<pid>.html
         self.pid = int(self.url.split("/")[-1].split(".")[0])
 
         self.title = ""
@@ -40,8 +40,8 @@ class Listing:
 
         """
         # Usually price= $1,000. So replace comma with empty char and convert it to an int.
-        self.price = int(self.raw.find(class_="price").text[1:].replace(",", ""))
-        self.title = self.raw.find(class_="title").text
+        self.price = int(self.raw.find(class_="price").text[1:].replace(",", "").strip())
+        self.title = self.raw.find(class_="title").text.strip()
         self.location = self.raw.find(class_="location").text.strip()
         self.get_listing_page_info()
         self.init_routes()
