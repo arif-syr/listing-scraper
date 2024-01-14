@@ -15,16 +15,6 @@ from Listing import Listing
 # Article on pd.cut https://towardsdatascience.com/how-to-bin-numerical-data-with-pandas-fe5146c9dc55
 # https://towardsdatascience.com/all-pandas-cut-you-should-know-for-transforming-numerical-data-into-categorical-data-1370cf7f4c4f
 
-
-# Create Search object
-# Go through csv to load existing listings and save pid's to set
-# Go through sublisting url's and get info
-#   If pid exists, then skip getting info for that specific sublisting
-#   Save all pid's from run to a set curr_listings
-# Now we have listing data loaded from csv, and new listing data loaded from the internet
-# Remove listing data for pid's not in curr_listings from df
-#   Write current listing data with old data removed to csv
-
 class Search:
     """Creates a class to scrape and operate Craigslist listings.
     Constructor requires dictionary of the following parameters:
@@ -65,7 +55,7 @@ class Search:
         self.current_run_pids = set()  # current pid's
         self.df = pd.DataFrame(columns=cols)
 
-    def load_pid_data(self):
+    def load_pid_data(self) -> None:
         """Checks if search savepath and csv available, and loads/creates files as appropriate."""
 
         csv_path = os.path.join(json_folder, self.search_name + ".csv")
@@ -89,7 +79,10 @@ class Search:
 
         Args:
             listing_raw_list: List of bs4 Tag objects representing Listing HTML
+
+        Returns: List of Listings
         """
+
         new_listings = []
         for curr_listing_idx, listing_raw in enumerate(listing_raw_list):
             curr_listing_idx += 1  # For one-indexing
@@ -120,7 +113,7 @@ class Search:
                 new_listings.append(curr_listing.get_data())
         return new_listings
 
-    def get_listings(self):
+    def get_listings(self) -> int:
         """Scrapes data from main page and gets information for each listing.
         - gets the response from the URL and creates a soup out of it.
         - finds all the list items and grabs their HTML <li> tag
@@ -151,7 +144,7 @@ class Search:
         print(f"new df size: {len(self.df)}")
         return 1
 
-    def delete_old_listings(self):
+    def delete_old_listings(self) -> None:
         """Deletes removed listings from craigslist search."""
 
         old_listings = self.pids - self.current_run_pids
@@ -166,7 +159,7 @@ class Search:
             print(self.df.to_string())
             print(f"preserved listings: {preserved_listings}")
 
-    def drop_listings(self):
+    def drop_listings(self) -> None:
         """Drops listings below a specified threshold to filter fake listings."""
         print(
             "listings to be dropped because of price:",
@@ -194,15 +187,15 @@ class Search:
         # Sort by journey length, then price
         self.df = self.df.sort_values(by=["Cat", "POSTED"], ascending=True)
 
-    def write_to_csv(self):
+    def write_to_csv(self) -> None:
         """Saves dataframe results to a csv."""
         # Save all columns except the Cat column to csv
         self.df.loc[:, self.df.columns != "Cat"].to_csv(
             os.path.join(json_folder, self.search_name + ".csv"), mode="w+"
         )
 
-    def save_to_html(self):
-        """Saves df to HTML file."""
+    def save_to_html(self) -> None:
+        """Saves df to HTML file. Also makes it look better."""
         self.make_df_pretty()
         html_path = os.path.join(json_folder, self.search_name + ".html")
         with open(html_path, "w+") as html_file:
@@ -216,8 +209,8 @@ class Search:
                 .replace("<th>", "<th align='center'>")
             )  # escape=False is needed to render HTML links
 
-    def make_clickable(self, url):
-        """Converst url to an HTML hyperlink.
+    def make_clickable(self, url: str) -> str:
+        """Converts url to an HTML hyperlink for the HTML file.
 
         Args:
             url (string): Raw url.
@@ -229,7 +222,7 @@ class Search:
             url, "URL"
         )
 
-    def make_HMS(self, travel_time):
+    def make_HMS(self, travel_time: datetime.timedelta) -> str:
         """Converts timedelta object into HH:MM:SS format.
 
         Args:
@@ -241,7 +234,7 @@ class Search:
         travel_time = str(travel_time).split()[-1].split(".")[0]
         return travel_time
 
-    def format_posted(self, posted):
+    def format_posted(self, posted: datetime.timedelta) -> str:
         """Converts timedelta object to a string based on how long ago a posting was listed.
 
         Args:
@@ -269,7 +262,7 @@ class Search:
             lambda x: self.format_posted(posted=x["POSTED"]), axis=1
         )
 
-    def run(self):
+    def run(self) -> None:
         """Runs all the helper functions in class."""
 
         self.load_pid_data()
