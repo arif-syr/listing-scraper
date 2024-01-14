@@ -246,12 +246,12 @@ if __name__ == "__main__":
     if args.run:
         show_all_searches()
         while True:
-            current_search = input("Which search do you want to run?\n")
-            if current_search == "Q":
+            current_search_name = input("Which search do you want to run?\n")
+            if current_search_name == "Q":
                 break
-            if JSONProcessing.search_name_exists(current_search):
-                tst = Search(JSONProcessing.get_json_dict(current_search))
-                tst.run()
+            if JSONProcessing.search_name_exists(current_search_name):
+                current_search = Search(JSONProcessing.get_json_dict(current_search_name))
+                current_search.run()
             else:
                 print("This search does not exist. Please try again, or type 'Q' to exit.")
                 continue
