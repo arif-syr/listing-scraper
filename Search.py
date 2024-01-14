@@ -26,44 +26,17 @@ from Listing import Listing
 #   Write current listing data with old data removed to csv
 
 class Search:
-    # def __init__(
-    #     self,
-    #     target_lat: float,
-    #     target_lon: float,
-    #     bedrooms: int,
-    #     max_price: str,
-    #     max_dist: str,
-    #     search_savepath: str,
-    #     low_budget_threshold: int = 0,
-    #     search_type: str = "apa",
-    # ) -> None:
-    #     self.target_lat = target_lat
-    #     self.target_lon = target_lon
-    #     self.bedrooms = bedrooms
-    #     self.max_price = max_price
-    #     self.max_dist = max_dist
-    #     self.search_savepath = search_savepath
-    #     if not self.bedrooms:
-    #         self.url = f"https://sfbay.craigslist.org/search/san-francisco-ca/{search_type}?lat={target_lat}&lon={target_lon}&max_price={max_price}&search_distance={max_dist}"
-    #     else:
-    #         self.url = f"https://sfbay.craigslist.org/search/san-francisco-ca/{search_type}?lat={target_lat}&lon={target_lon}&max_bedrooms={bedrooms}&max_price={max_price}&min_bedrooms={bedrooms}&search_distance={max_dist}"
-    #     print(f"Checking URL {self.url}")
-    #     # self.listings = {}  # Maybe dict with pids as keys?
-    #
-    #     # Dir where csv's and html files are stored
-    #     self.low_budget_threshold = low_budget_threshold
-    #     self.search_savepath = search_savepath
-    #     self.pids = set()  # existing pid's
-    #     self.current_run_pids = set()  # current pid's
     """Creates a class to scrape and operate Craigslist listings.
+    Constructor requires dictionary of the following parameters:
+    search_name (str): Name of search
     search_lat (float): Latitude of search.
     search_lon (float): Longitude of search.
-    bedrooms (str): No of bedrooms interested in.
-    max_rent (str): Maximum budget.
+    bedrooms (int): No of bedrooms interested in.
+    max_rent (int): Maximum budget.
     search_radius (str): Radius of search.
     search_savepath (str): Directory to store results in.
-    low_budget_threshold (int): Filter out listings below this price. Defaults to 0.
-    search_type (str): Type of search - "apa" for available apartments, "roo" for rooms in existing leases.
+    min_rent_cutoff (int): Filter out listings below this price. Defaults to 0.
+    search_type (str): Type of search - "apa" for whole apartments, "roo" for room(s) in existing apartments.
         Defaults to "apa".
 
     Args:
@@ -75,20 +48,19 @@ class Search:
             raise KeyError("Search settings missing values.")
         self.search_name = data_dict['search_name']
         self.max_rent = data_dict['max_rent']
-        self.search_radius = data_dict['search_radius']
-        self.bedrooms = data_dict['bedrooms']
+        self.min_rent_cutoff = data_dict['min_rent_cutoff']
         self.search_lat = data_dict['search_lat']
         self.search_lon = data_dict['search_lon']
-        self.min_rent_cutoff = data_dict['min_rent_cutoff']
+        self.search_radius = data_dict['search_radius']
+        self.bedrooms = data_dict['bedrooms']
         self.search_type = data_dict['search_type']
-
-        # Dir where csv's and html files are stored
 
         self.url = (f"https://sfbay.craigslist.org/search/san-francisco-ca/{self.search_type}?lat={self.search_lat}"
                     f"&lon={self.search_lon}&max_price={self.max_rent}&search_distance={self.search_radius}"
                     f"&max_bedrooms={self.bedrooms}")
         print(f"Checking URL {self.url}")
-        # self.listings = {}  # Maybe dict with pids as keys?
+
+        # pid = unique id for a listing
         self.pids = set()  # existing pid's
         self.current_run_pids = set()  # current pid's
         self.df = pd.DataFrame(columns=cols)
@@ -279,7 +251,7 @@ class Search:
             str: readable format of above.
         """
         days = posted.days
-        hours = (posted.seconds) // 60 ** 2
+        hours = posted.seconds // 60 ** 2
         return f"{days} days, {hours} hours ago"
 
     def make_df_pretty(self):
