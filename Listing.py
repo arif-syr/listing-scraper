@@ -1,13 +1,23 @@
 import datetime, json, requests
+
+import bs4
 from bs4 import BeautifulSoup
 from consts import HEADER, USF_LAT_LON, cols
 from geopy import distance
 
 
 class Listing:
-    def __init__(self, listing_raw):
+    def __init__(self, listing_raw: bs4.Tag):
+        """
+        Constructor for a Listing. Partially parses a bs4.Tag element to populate the instance with relevant info about
+        the listing.
+        Only partially parses so the listing can be checked against existing pid's and its HTML does not have to
+        be requested.
+        Args:
+            listing_raw: bs4.Tag element of a Craigslist listing
+        """
         self.raw = listing_raw
-        self.routes = ""
+        self.routes = json.dumps({})
 
         # Get listing url
         self.url = self.raw.find("a").get("href")
@@ -22,8 +32,13 @@ class Listing:
         self.crow_distance = 0.0
         self.travel_time = datetime.timedelta()
 
-    # Gets all attributes
-    def generate_listing_data(self):
+    def generate_listing_data(self) -> None:
+        """
+        Parses the HTML and grabs all the relevant info. The only thing generated is the travel time to a desired
+        commute location.
+        Returns: Nothing
+
+        """
         # Usually price= $1,000. So replace comma with empty char and convert it to an int.
         self.price = int(self.raw.find(class_="price").text[1:].replace(",", ""))
         self.title = self.raw.find(class_="title").text
@@ -32,34 +47,42 @@ class Listing:
         self.init_routes()
         self.get_travel_time()
 
-    def get_listing_page_info(self):
+    def get_listing_page_info(self) -> None:
+        """
+        Sends a GET request to obtain the Listing HTML. Then gets all the info from the Listing page that could not
+        be obtained from the Search page.
+        """
         listing_page_source = requests.get(self.url, headers=HEADER)
         # Create new soup of new listing
         listing_soup = BeautifulSoup(listing_page_source.text, "html.parser")
 
         # Grab element with lat/lon data
         listing_lat_lon_element = listing_soup.find(id="map")
+        self.lat_lon = (
+            float(listing_lat_lon_element["data-latitude"]),
+            float(listing_lat_lon_element["data-longitude"]),
+        )
+
+        # Crow distance is the distance to the commute location as the crow flies.
+        self.crow_distance = round(
+            distance.distance(self.lat_lon, USF_LAT_LON).miles, 1
+        )
 
         # Grab date and time of posting
         date_posted, time_posted = listing_soup.find(class_="date timeago").text.split()
 
-        # Convert date posted to days since
-        # datetime.date object below
+        # Convert date posted to days since now that it has been up.
         days_since = datetime.datetime.strptime(date_posted, "%Y-%m-%d")
 
         # Converts datetime object with hours, etc. to days ago
         self.posted = datetime.datetime.now() - days_since  # timedelta object
 
-        # Get class name which is lat and longitude
-        self.lat_lon = (
-            float(listing_lat_lon_element["data-latitude"]),
-            float(listing_lat_lon_element["data-longitude"]),
-        )
-        self.crow_distance = round(
-            distance.distance(self.lat_lon, USF_LAT_LON).miles, 1
-        )
+    def get_data(self) -> []:
+        """
+        Getter for Listing data
+        Returns: an array of the listing data
 
-    def get_data(self):
+        """
         to_return = [
             self.pid,
             self.title,
@@ -72,29 +95,18 @@ class Listing:
         ]
         return to_return
 
-    def print_data(self):
-        print(cols)
-        print(
-            [
-                self.pid,
-                self.title,
-                self.price,
-                self.travel_time,
-                self.url,
-                self.location,
-                self.crow_distance,
-                self.posted,
-            ]
-        )
-
-    # Gets OSRM json data
-    def init_routes(self):
+    def init_routes(self) -> None:
+        """
+        Queries OSRM for commute time by chosen commute type. Saves it in the current instance
+        """
         r = requests.get(
             f"https://routing.openstreetmap.de/routed-foot/route/v1/foot/{self.lat_lon[1]},{self.lat_lon[0]};{USF_LAT_LON[1]},{USF_LAT_LON[0]}?overview=false"
         )
         self.routes = json.loads(r.content)
 
-    # Returns string of travel time in HH:MM:SS. By default returns no. of days too.
-    def get_travel_time(self):
+    def get_travel_time(self) -> None:
+        """
+        Stores travel time to commute location as an instance variable
+        """
         route_data_json = self.routes.get("routes")[0]  # JSON of route information
         self.travel_time = datetime.timedelta(seconds=route_data_json["duration"])
