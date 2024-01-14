@@ -126,14 +126,3 @@ class JSONProcessing:
         files = [file for file in files if file.endswith(".json")]
         return files
 
-
-# if __name__ == '__main__':
-    # For now, create new searches and json's through the main function
-    # search = JSONProcessing.create_search_dict(max_rent=500, search_radius=0.5, bedrooms=1, search_lat=12.1212,
-    #                                            search_lon=11.1212, search_name="test", min_rent_cutoff=100,
-    #                                            search_type="apa")
-    # pprint.pprint(search)
-    # JSONProcessing.make_search_json_file(json_filename=search['search_name'] + ".json",
-    #                                      data=search, overwrite=True)
-    # dict = JSONProcessing.get_json_dict(search['search_name'] + ".json")
-    # pprint.pprint(dict)
