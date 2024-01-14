@@ -1,6 +1,7 @@
 COMMUTE_LAT_LON = (37.77935412096749, -122.45205444263789)
 OSRM_URL = ("https://routing.openstreetmap.de/routed-{commute_type}/route/v1/{commute_type}/"
             "{start_lon},{start_lat};{commute_lon},{commute_lat}?overview=false")
+COMMUTE_TYPE = "foot"
 HEADER = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/113.0",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",

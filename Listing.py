@@ -2,7 +2,7 @@ import datetime, json, requests
 
 import bs4
 from bs4 import BeautifulSoup
-from consts import HEADER, COMMUTE_LAT_LON, OSRM_URL
+from consts import HEADER, COMMUTE_LAT_LON, COMMUTE_TYPE, OSRM_URL
 from geopy import distance
 
 
@@ -31,7 +31,6 @@ class Listing:
         self.lat_lon = ()
         self.crow_distance = 0.0
         self.travel_time = datetime.timedelta()
-        self.commute_type = commute_type
 
     def generate_listing_data(self) -> None:
         """
@@ -100,9 +99,8 @@ class Listing:
         """
         Queries OSRM for commute time by chosen commute type. Saves it in the current instance
         """
-        formatted_url = OSRM_URL.format(commute_type=self.commute_type, start_lon=self.lat_lon[1],
-                                        start_lat=self.lat_lon[0], commute_lon=COMMUTE_LAT_LON[1],
-                                        commute_lat=COMMUTE_LAT_LON[0])
+        formatted_url = OSRM_URL.format(commute_type=COMMUTE_TYPE, start_lon=self.lat_lon[1], start_lat=self.lat_lon[0],
+                                        commute_lon=COMMUTE_LAT_LON[1], commute_lat=COMMUTE_LAT_LON[0])
         r = requests.get(formatted_url)
         self.routes = json.loads(r.content)
 
