@@ -1,13 +1,10 @@
 import datetime, os, pandas as pd, requests
 from consts import (
-    USF_LAT_LON,
     HEADER,
     cols,
-    dtypes,
     required_search_cols,
     json_folder
 )
-from constspriv import parent_filepath
 from bs4 import BeautifulSoup
 from Listing import Listing
 
@@ -61,7 +58,6 @@ class Search:
         csv_path = os.path.join(json_folder, self.search_name + ".csv")
         if not os.path.exists(csv_path):
             print("This search has no .csv of existing listings")
-            # os.mkdir(os.path.join(parent_filepath, self.search_savepath))
         else:
             self.df = pd.read_csv(csv_path, index_col=0)
 
