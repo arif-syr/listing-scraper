@@ -53,7 +53,7 @@ def lat_check(latitude: float) -> bool:
     Returns:
 
     """
-    print("NOTE: If latitude and longitude are outside the USA or Craigslist's map ranges, you may get nonsensical"
+    print("NOTE: If latitude and longitude are outside the USA or Craigslist's map ranges, you may get nonsensical "
           "results in return when running the search.")
     if not (-90.0 <= latitude <= 90.0):
         print("Latitude must be within [-90.0, 90.0]")
@@ -127,7 +127,14 @@ def create_new_search(overwrite: bool = False) -> None:
     if not overwrite:
         search_dict['search_name'] = get_input_with_checks_str("Please enter your search name:\n", name_validation)
     else:
-        search_dict['search_name'] = input("Please enter your search name:\n")
+        while True:
+            search_name = input("Please enter your search name:\n")
+            if JSONProcessing.search_name_exists(search_name):
+                search_dict['search_name'] = search_name
+                break
+            else:
+                print("That search does not exist. Please enter the name of an existing search.")
+                print(show_all_searches())
     search_dict['search_lat'] = get_input_with_checks_float("Please enter your search latitude:\n", lat_check)
     search_dict['search_lon'] = get_input_with_checks_float("Please enter your search longitude:\n", lon_check)
     search_dict['search_radius'] = get_input_with_checks_float("Please enter your desired search radius (in miles):\n",
