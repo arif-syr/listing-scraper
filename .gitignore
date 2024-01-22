@@ -1,3 +1,4 @@
 *.csv
 *.html
 *.pyc
+__pycache__
