@@ -200,7 +200,7 @@ class Search:
 
             # Write to HTML
             html_file.write(
-                self.df.to_html(escape=False)
+                self.df.to_html(escape=False, index=False)
                 .replace("<td>", "<td align='center'>")
                 .replace("<th>", "<th align='center'>")
             )  # escape=False is needed to render HTML links
