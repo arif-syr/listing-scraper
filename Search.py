@@ -167,6 +167,7 @@ class Search:
     def sort_df(self):
         """Sorts data according to parameters."""
         minute = 60
+        # Create bins to store listings by commute time in buckets
         # bins = [0,20], (20,30], (30,45], (45, 60]
         bins = [
             datetime.timedelta(0, 0 * minute),
@@ -180,7 +181,8 @@ class Search:
 
         # Create new column called "Cat" to store the category of journey length
         self.df["Cat"] = pd.cut(self.df["TRAVEL TIME"], bins=bins, labels=labels)
-        # Sort by journey length, then price
+        # Sort by commute time bucket, then recency of listing. Putting more recent listings near the top means
+        # you are more likely to get a response. If you want to sort by price, the column name is "PRICE ($)"
         self.df = self.df.sort_values(by=["Cat", "POSTED"], ascending=True)
 
     def write_to_csv(self) -> None:
