@@ -25,8 +25,25 @@ You can sort listings by commute times, date posted, rent, etc.
 
 You can specify a minimum rent to avoid a lot of spam.
 
-### Running it:
-You need Python 3, and the libraries in requirements.txt.
+### Running it with Docker (optional):
+To run this with Docker, follow these steps to get the docker container running, then follow the steps in the next section. 
+
+Use these steps to build and run the repo from a Dockerfile:
+1. cd into the repo: ```cd path/to/folder/listing-scraper```
+2. Build the image:
+   1. ```docker build -t listing-scraper .```
+   2. You can change the tag to whatever you want
+3. Run the container:
+   1. ```docker run -v ./:/usr/src/app -t -d listing-scraper```
+   2. The ```-v``` flag binds the current directory to the working directory of the container. This is done so the output files of the script are stored on your machine
+4. Enter the container's command line:
+   1. ```docker exec -it <container id> /bin/bash```
+   2. All containers can be listed using ```docker ps -a```. Just copy the one matching the tag.
+5. Follow steps in the next section to run the script
+
+### Running it (compiling from source code):
+If you are not following the Docker route, you need Python 3, and the libraries in requirements.txt.
+
 You can run the program by typing ```python3 run.py <options>```. Accepted options are shown under ```python3 run.py --help``` 
 
 If it's your first search, follow these steps:
