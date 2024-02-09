@@ -1,4 +1,5 @@
 import argparse, pprint
+import os
 import re
 
 import pandas as pd
@@ -213,7 +214,10 @@ def create_new_search(overwrite: bool = False) -> None:
 
 
 if __name__ == "__main__":
-    # print(len(sys.argv))
+    if not os.path.exists(json_folder):
+        os.mkdir(json_folder)
+        print("Made json_folder since it does not exist.")
+
     parser = argparse.ArgumentParser(description="Runs a search on Craigslist for living spaces based on "
                                                  "specified parameters")
     # Show a high-level overview of all Searches

@@ -122,8 +122,6 @@ class JSONProcessing:
         Returns: list of files.
 
         """
-        if not os.path.exists(json_folder):
-            os.mkdir(json_folder)
         files = os.listdir(json_folder)
         files = [file for file in files if file.endswith(".json")]
         return files
