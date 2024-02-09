@@ -116,12 +116,14 @@ class JSONProcessing:
         return search_data
 
     @staticmethod
-    def get_existing_searches():
+    def get_existing_searches() -> list:
         """
         Gets all existing Search setting files.
         Returns: list of files.
 
         """
+        if not os.path.exists(json_folder):
+            os.mkdir(json_folder)
         files = os.listdir(json_folder)
         files = [file for file in files if file.endswith(".json")]
         return files
