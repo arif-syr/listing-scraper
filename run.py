@@ -213,6 +213,7 @@ def create_new_search(overwrite: bool = False) -> None:
 
 
 if __name__ == "__main__":
+    # print(len(sys.argv))
     parser = argparse.ArgumentParser(description="Runs a search on Craigslist for living spaces based on "
                                                  "specified parameters")
     # Show a high-level overview of all Searches
@@ -255,3 +256,5 @@ if __name__ == "__main__":
             else:
                 print("This search does not exist. Please try again, or type 'Q' to exit.")
                 continue
+    else:
+        print("No args supplied. Use the -h flag to see what options exist.")
