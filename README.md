@@ -27,7 +27,20 @@ You can specify a minimum rent to avoid a lot of spam.
 
 ### Running it:
 You need Python 3, and the libraries in requirements.txt.
-You can run the program by typing ```python3 run.py <options>```
+You can run the program by typing ```python3 run.py <options>```. Accepted options are shown under ```python3 run.py --help``` 
+
+If it's your first search, follow these steps:
+1. Add your commute latitude and longitude to ```consts.py```
+2. Specify your commute mode (car/foot/bike) in ```consts.py```
+3. Run the following command to create a new search:```python3 run.py --new```
+4. Enter required params (target latitude, target longitude, search radius, etc.)
+5. Once the search is created, run ```python3 run.py --run```
+6. Enter your **search name** in the following prompt
+7. An html file with the results will be saved to json-searches/
+
+To change how the html file is sorted, change the columns it's sorted by on line 184 of Search.py
+
+### Overview:
 
 Modify consts.py to specify your commute latitude/longitude and commute type (foot/bike/bus)
 
