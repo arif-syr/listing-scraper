@@ -1,0 +1,8 @@
+version: '3.8'
+services:
+  app:
+    build: . # Look for Dockerfile in current directory to build from
+    image: listing-scraper:latest # What to name the image, with a tag
+    tty: true  # Equivalent to `-t`, keep container running and enable entering the container to interact with it
+    volumes: # Volume to bind the app to
+      - ./:/usr/src/app
